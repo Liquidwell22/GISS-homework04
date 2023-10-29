@@ -1,0 +1,56 @@
+---
+title: "homework04"
+output: html_document
+date: "2023-10-28"
+---
+
+```{r}
+library(here)
+library(sf)
+library(dplyr)
+install.packages("countrycode")
+library(countrycode)
+library(tidyverse)
+library(janitor)
+```
+
+read the geojson
+```{r}
+Worldmap <- st_read(here::here("data", "World_Countries_Generalized.geojson"))
+Worldmap
+plot(Worldmap)
+```
+read all data frame
+```{r}
+df_all<- read.csv(here::here("data","HDR21-22_Composite_indices_complete_time_series.csv"), 
+                         header = TRUE, sep = ",",  
+                         encoding = "latin1")
+```
+
+select the gender inequality data
+```{r}
+genderdf<-df_all %>% 
+  clean_names()%>%
+  select(iso3, country, gii_2019, gii_2010)%>%
+  mutate(difference=gii_2019-gii_2010)%>%
+  mutate(iso_code=countrycode(country, origin = 'country.name', destination = 'iso2c'))%>%
+  mutate(iso_code2=countrycode(iso3, origin ='iso3c', destination = 'iso2c'))
+```
+
+connect csv and the geojson
+```{r}
+worldgendermap <- Worldmap %>%
+  clean_names() %>%
+  left_join(.,
+            genderdf,
+            by = c("iso"="iso_code"))
+```
+
+```{r}
+worldgendermap2 <- Worldmap %>%
+  clean_names() %>%
+  left_join(.,
+            genderdf,
+            by = c("country"="country"))
+```
+
